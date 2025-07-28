@@ -1,3 +1,8 @@
+--[[
+  🔥 99 Nights Custom UI by Ainsoft_Tech 🔥
+  - Includes: Loading screen, draggable centered GUI, mobile toggle, Kill Aura
+--]]
+
 -- Cleanup Old GUIs
 local pg = game.Players.LocalPlayer:WaitForChild("PlayerGui")
 for _, gui in ipairs(pg:GetChildren()) do
@@ -33,6 +38,7 @@ loadingScreen:Destroy()
 local gui = Instance.new("ScreenGui", pg)
 gui.Name = "CustomUI"
 gui.ResetOnSpawn = false
+gui.IgnoreGuiInset = true
 
 -- Main Frame
 local main = Instance.new("Frame", gui)
@@ -41,19 +47,22 @@ main.Position = UDim2.new(0.5, -200, 0.5, -150)
 main.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
 main.BorderSizePixel = 0
 main.Name = "MainFrame"
-main.Active = true
 Instance.new("UICorner", main).CornerRadius = UDim.new(0, 10)
 
--- Function: Dragify Frame
-local function dragify(frame)
+-- Re-center after loading
+task.wait()
+main.Position = UDim2.new(0.5, -main.Size.X.Offset / 2, 0.5, -main.Size.Y.Offset / 2)
+
+-- Dragify Function
+local function dragify(dragFrame, target)
     local UIS = game:GetService("UserInputService")
     local dragging, dragInput, dragStart, startPos
 
-    frame.InputBegan:Connect(function(input)
+    dragFrame.InputBegan:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1 or input.Touch then
             dragging = true
             dragStart = input.Position
-            startPos = frame.Position
+            startPos = target.Position
             input.Changed:Connect(function()
                 if input.UserInputState == Enum.UserInputState.End then
                     dragging = false
@@ -62,7 +71,7 @@ local function dragify(frame)
         end
     end)
 
-    frame.InputChanged:Connect(function(input)
+    dragFrame.InputChanged:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
             dragInput = input
         end
@@ -71,24 +80,34 @@ local function dragify(frame)
     UIS.InputChanged:Connect(function(input)
         if input == dragInput and dragging then
             local delta = input.Position - dragStart
-            frame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+            target.Position = UDim2.new(
+                startPos.X.Scale, startPos.X.Offset + delta.X,
+                startPos.Y.Scale, startPos.Y.Offset + delta.Y
+            )
         end
     end)
 end
 
--- Make MainFrame Draggable
-dragify(main)
+-- Drag Bar
+local dragBar = Instance.new("Frame", main)
+dragBar.Size = UDim2.new(1, 0, 0, 40)
+dragBar.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+dragBar.BorderSizePixel = 0
+dragBar.Name = "DragBar"
+Instance.new("UICorner", dragBar).CornerRadius = UDim.new(0, 10)
+
+dragify(dragBar, main)
 
 -- Title
-local title = Instance.new("TextLabel", main)
-title.Size = UDim2.new(1, 0, 0, 40)
+local title = Instance.new("TextLabel", dragBar)
+title.Size = UDim2.new(1, 0, 1, 0)
 title.BackgroundTransparency = 1
 title.Text = "🔥 99 Nights Utility 🔥"
 title.Font = Enum.Font.GothamBold
 title.TextColor3 = Color3.fromRGB(255, 255, 255)
 title.TextScaled = true
 
--- Feature: Kill Aura Toggle
+-- Kill Aura Toggle
 local killAuraToggle = Instance.new("TextButton", main)
 killAuraToggle.Size = UDim2.new(0, 150, 0, 40)
 killAuraToggle.Position = UDim2.new(0, 20, 0, 60)
@@ -116,7 +135,8 @@ toggleFrame.Size = UDim2.new(0, 100, 0, 40)
 toggleFrame.Position = UDim2.new(1, -110, 1, -60)
 toggleFrame.BackgroundTransparency = 1
 toggleFrame.Active = true
-dragify(toggleFrame)
+
+dragify(toggleFrame, toggleFrame)
 
 local toggleBtn = Instance.new("TextButton", toggleFrame)
 toggleBtn.Size = UDim2.new(1, 0, 1, 0)
@@ -132,7 +152,7 @@ toggleBtn.MouseButton1Click:Connect(function()
     main.Visible = not main.Visible
 end)
 
--- Optional: PC Keybind
+-- PC Keybind (Right Ctrl)
 local UIS = game:GetService("UserInputService")
 UIS.InputBegan:Connect(function(input, gameProcessed)
     if not gameProcessed and input.KeyCode == Enum.KeyCode.RightControl then
