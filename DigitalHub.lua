@@ -16,7 +16,6 @@ frame.Position = UDim2.new(0.3, 0, 0.4, 0)
 frame.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
 frame.BackgroundTransparency = 0.1
 frame.BorderSizePixel = 0
-
 Instance.new("UICorner", frame).CornerRadius = UDim.new(0, 10)
 
 local label = Instance.new("TextLabel", frame)
@@ -40,11 +39,45 @@ local main = Instance.new("Frame", gui)
 main.Size = UDim2.new(0, 400, 0, 300)
 main.Position = UDim2.new(0.5, -200, 0.5, -150)
 main.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
-main.Active = true
-main.Draggable = true
 main.BorderSizePixel = 0
-
+main.Name = "MainFrame"
+main.Active = true
 Instance.new("UICorner", main).CornerRadius = UDim.new(0, 10)
+
+-- Function: Dragify Frame
+local function dragify(frame)
+    local UIS = game:GetService("UserInputService")
+    local dragging, dragInput, dragStart, startPos
+
+    frame.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.Touch then
+            dragging = true
+            dragStart = input.Position
+            startPos = frame.Position
+            input.Changed:Connect(function()
+                if input.UserInputState == Enum.UserInputState.End then
+                    dragging = false
+                end
+            end)
+        end
+    end)
+
+    frame.InputChanged:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
+            dragInput = input
+        end
+    end)
+
+    UIS.InputChanged:Connect(function(input)
+        if input == dragInput and dragging then
+            local delta = input.Position - dragStart
+            frame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+        end
+    end)
+end
+
+-- Make MainFrame Draggable
+dragify(main)
 
 -- Title
 local title = Instance.new("TextLabel", main)
@@ -55,7 +88,7 @@ title.Font = Enum.Font.GothamBold
 title.TextColor3 = Color3.fromRGB(255, 255, 255)
 title.TextScaled = true
 
--- Feature Section
+-- Feature: Kill Aura Toggle
 local killAuraToggle = Instance.new("TextButton", main)
 killAuraToggle.Size = UDim2.new(0, 150, 0, 40)
 killAuraToggle.Position = UDim2.new(0, 20, 0, 60)
@@ -83,7 +116,7 @@ toggleFrame.Size = UDim2.new(0, 100, 0, 40)
 toggleFrame.Position = UDim2.new(1, -110, 1, -60)
 toggleFrame.BackgroundTransparency = 1
 toggleFrame.Active = true
-toggleFrame.Draggable = true
+dragify(toggleFrame)
 
 local toggleBtn = Instance.new("TextButton", toggleFrame)
 toggleBtn.Size = UDim2.new(1, 0, 1, 0)
