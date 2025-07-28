@@ -1,6 +1,6 @@
 --[[
-  🔥 99 Nights Custom UI by Ainsoft_Tech 🔥
-  - Includes: Loading screen, draggable centered GUI, mobile toggle, Kill Aura
+  🔥 99 Nights GOA-Style UI by Ainsoft_Tech 🔥
+  - Loading screen, draggable GUI, mobile toggle, Kill Aura, GOA visuals
 --]]
 
 -- Cleanup Old GUIs
@@ -11,17 +11,27 @@ for _, gui in ipairs(pg:GetChildren()) do
     end
 end
 
--- Loading Screen
+-- GOA-Style Loading Screen
+local blur = Instance.new("BlurEffect", game:GetService("Lighting"))
+blur.Size = 20
+
 local loadingScreen = Instance.new("ScreenGui", pg)
 loadingScreen.Name = "LoadingScreen"
+loadingScreen.IgnoreGuiInset = true
+loadingScreen.ResetOnSpawn = false
 
-local frame = Instance.new("Frame", loadingScreen)
-frame.Size = UDim2.new(0.4, 0, 0.2, 0)
-frame.Position = UDim2.new(0.3, 0, 0.4, 0)
+local bg = Instance.new("Frame", loadingScreen)
+bg.Size = UDim2.new(1, 0, 1, 0)
+bg.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
+bg.BackgroundTransparency = 0.3
+
+local frame = Instance.new("Frame", bg)
+frame.Size = UDim2.new(0, 250, 0, 80)
+frame.Position = UDim2.new(0.5, -125, 0.5, -40)
 frame.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
-frame.BackgroundTransparency = 0.1
+frame.BackgroundTransparency = 0.05
 frame.BorderSizePixel = 0
-Instance.new("UICorner", frame).CornerRadius = UDim.new(0, 10)
+Instance.new("UICorner", frame).CornerRadius = UDim.new(0, 12)
 
 local label = Instance.new("TextLabel", frame)
 label.Size = UDim2.new(1, 0, 1, 0)
@@ -32,9 +42,10 @@ label.Font = Enum.Font.FredokaOne
 label.TextScaled = true
 
 task.wait(2)
+blur:Destroy()
 loadingScreen:Destroy()
 
--- Main Custom UI
+-- Create Main GUI
 local gui = Instance.new("ScreenGui", pg)
 gui.Name = "CustomUI"
 gui.ResetOnSpawn = false
@@ -44,22 +55,22 @@ gui.IgnoreGuiInset = true
 local main = Instance.new("Frame", gui)
 main.Size = UDim2.new(0, 400, 0, 300)
 main.Position = UDim2.new(0.5, -200, 0.5, -150)
-main.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
+main.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
 main.BorderSizePixel = 0
 main.Name = "MainFrame"
-Instance.new("UICorner", main).CornerRadius = UDim.new(0, 10)
+Instance.new("UICorner", main).CornerRadius = UDim.new(0, 12)
 
--- Re-center after loading
+-- Re-center just in case
 task.wait()
 main.Position = UDim2.new(0.5, -main.Size.X.Offset / 2, 0.5, -main.Size.Y.Offset / 2)
 
--- Dragify Function
+-- Drag Function
 local function dragify(dragFrame, target)
     local UIS = game:GetService("UserInputService")
     local dragging, dragInput, dragStart, startPos
 
     dragFrame.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.Touch then
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
             dragging = true
             dragStart = input.Position
             startPos = target.Position
@@ -91,10 +102,10 @@ end
 -- Drag Bar
 local dragBar = Instance.new("Frame", main)
 dragBar.Size = UDim2.new(1, 0, 0, 40)
-dragBar.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+dragBar.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
 dragBar.BorderSizePixel = 0
 dragBar.Name = "DragBar"
-Instance.new("UICorner", dragBar).CornerRadius = UDim.new(0, 10)
+Instance.new("UICorner", dragBar).CornerRadius = UDim.new(0, 12)
 
 dragify(dragBar, main)
 
@@ -107,17 +118,47 @@ title.Font = Enum.Font.GothamBold
 title.TextColor3 = Color3.fromRGB(255, 255, 255)
 title.TextScaled = true
 
--- Kill Aura Toggle
+-- Kill Aura Toggle Button (GOA Style)
 local killAuraToggle = Instance.new("TextButton", main)
-killAuraToggle.Size = UDim2.new(0, 150, 0, 40)
+killAuraToggle.Size = UDim2.new(0, 160, 0, 45)
 killAuraToggle.Position = UDim2.new(0, 20, 0, 60)
 killAuraToggle.Text = "Kill Aura: OFF"
 killAuraToggle.Font = Enum.Font.GothamBold
 killAuraToggle.TextScaled = true
 killAuraToggle.TextColor3 = Color3.new(1, 1, 1)
 killAuraToggle.BackgroundColor3 = Color3.fromRGB(0, 170, 255)
-Instance.new("UICorner", killAuraToggle).CornerRadius = UDim.new(0, 8)
+Instance.new("UICorner", killAuraToggle).CornerRadius = UDim.new(0, 10)
 
+-- Gradient
+local gradient = Instance.new("UIGradient", killAuraToggle)
+gradient.Color = ColorSequence.new{
+    ColorSequenceKeypoint.new(0, Color3.fromRGB(0, 200, 255)),
+    ColorSequenceKeypoint.new(1, Color3.fromRGB(0, 140, 255))
+}
+
+-- Shadow
+local shadow = Instance.new("ImageLabel", killAuraToggle)
+shadow.ZIndex = 0
+shadow.Position = UDim2.new(0, -5, 0, -5)
+shadow.Size = UDim2.new(1, 10, 1, 10)
+shadow.BackgroundTransparency = 1
+shadow.Image = "rbxassetid://1316045217"
+shadow.ImageTransparency = 0.5
+shadow.ScaleType = Enum.ScaleType.Slice
+shadow.SliceCenter = Rect.new(10, 10, 118, 118)
+
+-- Hover Effect
+local function onHover(btn)
+    btn.MouseEnter:Connect(function()
+        btn.BackgroundColor3 = Color3.fromRGB(0, 190, 255)
+    end)
+    btn.MouseLeave:Connect(function()
+        btn.BackgroundColor3 = Color3.fromRGB(0, 170, 255)
+    end)
+end
+onHover(killAuraToggle)
+
+-- Toggle Behavior
 local killAuraState = false
 killAuraToggle.MouseButton1Click:Connect(function()
     killAuraState = not killAuraState
@@ -147,6 +188,8 @@ toggleBtn.Font = Enum.Font.GothamBold
 toggleBtn.TextScaled = true
 toggleBtn.AutoButtonColor = true
 Instance.new("UICorner", toggleBtn).CornerRadius = UDim.new(0, 8)
+
+onHover(toggleBtn)
 
 toggleBtn.MouseButton1Click:Connect(function()
     main.Visible = not main.Visible
