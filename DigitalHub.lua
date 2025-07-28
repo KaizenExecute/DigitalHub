@@ -1,8 +1,42 @@
+-- Custom Loader GUI
+local loadingScreen = Instance.new("ScreenGui", game.Players.LocalPlayer:WaitForChild("PlayerGui"))
+loadingScreen.Name = "LoadingScreen"
+local frame = Instance.new("Frame", loadingScreen)
+frame.Size = UDim2.new(0.3, 0, 0.2, 0)
+frame.Position = UDim2.new(0.35, 0, 0.4, 0)
+frame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+frame.BorderSizePixel = 0
+local label = Instance.new("TextLabel", frame)
+label.Size = UDim2.new(1, 0, 1, 0)
+label.BackgroundTransparency = 1
+label.Text = "Loading 99 Nights Utility..."
+label.TextColor3 = Color3.fromRGB(255, 255, 255)
+label.Font = Enum.Font.GothamBold
+label.TextScaled = true
+task.wait(2)
+loadingScreen:Destroy()
+
 -- Load Kavo UI Library
 local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/xHeptc/Kavo-UI-Library/main/source.lua"))()
 local Window = Library.CreateLib("99 Nights Utility", "Serpent")
 
--- Variables
+-- Mobile Button Toggle
+local UserInputService = game:GetService("UserInputService")
+local TouchGui = Instance.new("ScreenGui", game.Players.LocalPlayer:WaitForChild("PlayerGui"))
+TouchGui.Name = "TouchUI"
+local toggleButton = Instance.new("TextButton", TouchGui)
+toggleButton.Size = UDim2.new(0, 120, 0, 40)
+toggleButton.Position = UDim2.new(0, 10, 1, -50)
+toggleButton.BackgroundColor3 = Color3.fromRGB(0, 170, 255)
+toggleButton.Text = "Toggle UI"
+toggleButton.TextColor3 = Color3.new(1, 1, 1)
+toggleButton.Font = Enum.Font.GothamSemibold
+toggleButton.TextScaled = true
+toggleButton.MouseButton1Click:Connect(function()
+    Library:ToggleUI()
+end)
+
+-- Services
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
 local Workspace = game:GetService("Workspace")
@@ -39,7 +73,7 @@ Section:NewSlider("Aura Range", "Set Kill Aura range", 100, 10, function(val)
     _G.auraRange = val
 end)
 
--- Auto Gather Items
+-- Auto Gather
 _G.autoGather = false
 Section:NewToggle("Auto Gather", "Pull resources to you", function(state)
     _G.autoGather = state
@@ -50,7 +84,7 @@ Section:NewToggle("Auto Gather", "Pull resources to you", function(state)
                 if hrp then
                     for _, item in ipairs(Workspace:GetDescendants()) do
                         if item:IsA("BasePart") and table.find({"Wood", "Fuel", "Food"}, item.Name) then
-                            item.CFrame = hrp.CFrame + Vector3.new(math.random(-3,3), 0, math.random(-3,3))
+                            item.CFrame = hrp.CFrame + Vector3.new(math.random(-3, 3), 0, math.random(-3, 3))
                         end
                     end
                 end
@@ -94,7 +128,7 @@ Section:NewToggle("ESP", "See mobs, chests, etc.", function(state)
     end
 end)
 
--- Teleport To Dropdown
+-- Teleport
 Section:NewDropdown("Teleport To", "Go to NPCs or items", {"Camp", "LostChild", "Chest", "Fuel"}, function(choice)
     local hrp = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
     if hrp then
@@ -110,7 +144,7 @@ Section:NewDropdown("Teleport To", "Go to NPCs or items", {"Camp", "LostChild", 
     end
 end)
 
--- Bring Items Section
+-- Bring Items
 local Items = {"Scrap", "Fuel", "Food", "Gear"}
 Section:NewDropdown("Bring Item", "Teleport item to you", Items, function(choice)
     local hrp = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
@@ -132,13 +166,13 @@ Section:NewButton("Open All Chests", "Simulate instant open", function()
     end
 end)
 
--- Speed
+-- WalkSpeed
 Section:NewSlider("Speed", "Adjust WalkSpeed", 200, 16, function(val)
     local hum = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid")
     if hum then hum.WalkSpeed = val end
 end)
 
--- ESP Refresh
+-- Refresh ESP
 Section:NewButton("Refresh ESP", "Reapplies ESP highlights", function()
     removeESP()
     task.wait(0.1)
@@ -220,7 +254,7 @@ Extra:NewButton("Reset", "Respawn character", function()
     end
 end)
 
--- Open/Close UI Keybind
+-- UI Toggle Keybind
 Tab:NewKeybind("Toggle UI", "Show/Hide GUI", Enum.KeyCode.RightControl, function()
     Library:ToggleUI()
 end)
