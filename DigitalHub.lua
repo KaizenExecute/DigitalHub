@@ -2,23 +2,32 @@
 local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/xHeptc/Kavo-UI-Library/main/source.lua"))()
 local Window = Library.CreateLib("99 Nights Utility", "Serpent")
 
--- Main tab
+-- Variables
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+local Workspace = game:GetService("Workspace")
+
+-- Main Tab
 local Tab = Window:NewTab("Cheats")
 local Section = Tab:NewSection("Main Features")
 
--- Kill Aura
+-- Kill Aura with Range
 _G.killAura = false
-Section:NewToggle("Kill Aura", "Automatically attack nearby foes", function(state)
+_G.auraRange = 20
+Section:NewToggle("Kill Aura", "Auto attack nearby mobs", function(state)
     _G.killAura = state
     if state then
         task.spawn(function()
             while _G.killAura and task.wait(0.1) do
-                local player = game.Players.LocalPlayer
-                local char = player.Character
-                if char and char:FindFirstChild("Humanoid") then
-                    for _, mob in ipairs(workspace:GetDescendants()) do
+                local char = LocalPlayer.Character
+                local hrp = char and char:FindFirstChild("HumanoidRootPart")
+                if hrp then
+                    for _, mob in ipairs(Workspace:GetDescendants()) do
                         if mob:IsA("Model") and mob:FindFirstChild("Humanoid") and mob ~= char then
-                            mob.Humanoid:TakeDamage(10)
+                            local mobHRP = mob:FindFirstChild("HumanoidRootPart") or mob:FindFirstChildWhichIsA("BasePart")
+                            if mobHRP and (mobHRP.Position - hrp.Position).Magnitude <= _G.auraRange then
+                                mob.Humanoid:TakeDamage(10)
+                            end
                         end
                     end
                 end
@@ -26,20 +35,22 @@ Section:NewToggle("Kill Aura", "Automatically attack nearby foes", function(stat
         end)
     end
 end)
+Section:NewSlider("Aura Range", "Set Kill Aura range", 100, 10, function(val)
+    _G.auraRange = val
+end)
 
--- Auto Gather
+-- Auto Gather Items
 _G.autoGather = false
-Section:NewToggle("Auto Gather", "Collect resources automatically", function(state)
+Section:NewToggle("Auto Gather", "Pull resources to you", function(state)
     _G.autoGather = state
     if state then
         task.spawn(function()
             while _G.autoGather and task.wait(1) do
-                local player = game.Players.LocalPlayer
-                local hrp = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
+                local hrp = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
                 if hrp then
-                    for _, item in ipairs(workspace:GetDescendants()) do
-                        if item:IsA("BasePart") and (item.Name == "Wood" or item.Name == "Fuel" or item.Name == "Food") then
-                            item.CFrame = hrp.CFrame + Vector3.new(math.random(-3, 3), 0, math.random(-3, 3))
+                    for _, item in ipairs(Workspace:GetDescendants()) do
+                        if item:IsA("BasePart") and table.find({"Wood", "Fuel", "Food"}, item.Name) then
+                            item.CFrame = hrp.CFrame + Vector3.new(math.random(-3,3), 0, math.random(-3,3))
                         end
                     end
                 end
@@ -51,15 +62,14 @@ end)
 -- ESP
 _G.espEnabled = false
 local function createESP(target)
-    if not target:IsA("Model") then return end
-    if target:FindFirstChild("ESPBox") then return end
+    if not target:IsA("Model") or target:FindFirstChild("ESPBox") then return end
     local base = target:FindFirstChildWhichIsA("BasePart")
     if base then
         local box = Instance.new("BoxHandleAdornment")
         box.Name = "ESPBox"
         box.Adornee = base
         box.Size = target:GetExtentsSize()
-        box.Color3 = (target.Name == "LostChild" and Color3.new(0,1,0) or target.Name == "Chest" and Color3.new(1,0.8,0) or Color3.new(1,0,0))
+        box.Color3 = (target.Name == "LostChild" and Color3.new(0,1,0) or target.Name == "Chest" and Color3.new(1,1,0) or Color3.new(1,0,0))
         box.Transparency = 0.5
         box.AlwaysOnTop = true
         box.ZIndex = 10
@@ -67,16 +77,14 @@ local function createESP(target)
     end
 end
 local function removeESP()
-    for _, obj in ipairs(workspace:GetDescendants()) do
-        if obj:FindFirstChild("ESPBox") then
-            obj.ESPBox:Destroy()
-        end
+    for _, obj in ipairs(Workspace:GetDescendants()) do
+        if obj:FindFirstChild("ESPBox") then obj.ESPBox:Destroy() end
     end
 end
-Section:NewToggle("ESP", "Show items, chests, mobs through walls", function(state)
+Section:NewToggle("ESP", "See mobs, chests, etc.", function(state)
     _G.espEnabled = state
     if state then
-        for _, obj in ipairs(workspace:GetDescendants()) do
+        for _, obj in ipairs(Workspace:GetDescendants()) do
             if obj:IsA("Model") and (obj.Name == "Chest" or obj.Name == "Wolf" or obj.Name == "LostChild") then
                 createESP(obj)
             end
@@ -86,12 +94,11 @@ Section:NewToggle("ESP", "Show items, chests, mobs through walls", function(stat
     end
 end)
 
--- Teleport Dropdown
-Section:NewDropdown("Teleport To", "Select point of interest", {"LostChild", "Chest", "Fuel"}, function(choice)
-    local player = game.Players.LocalPlayer
-    local hrp = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
+-- Teleport To Dropdown
+Section:NewDropdown("Teleport To", "Go to NPCs or items", {"Camp", "LostChild", "Chest", "Fuel"}, function(choice)
+    local hrp = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
     if hrp then
-        for _, obj in ipairs(workspace:GetDescendants()) do
+        for _, obj in ipairs(Workspace:GetDescendants()) do
             if obj.Name == choice and obj:IsA("Model") then
                 local base = obj:FindFirstChildWhichIsA("BasePart")
                 if base then
@@ -103,18 +110,40 @@ Section:NewDropdown("Teleport To", "Select point of interest", {"LostChild", "Ch
     end
 end)
 
--- Walk Speed
-Section:NewSlider("Speed", "Set walk speed (default 16)", 200, 16, function(val)
-    local hum = game.Players.LocalPlayer.Character and game.Players.LocalPlayer.Character:FindFirstChild("Humanoid")
+-- Bring Items Section
+local Items = {"Scrap", "Fuel", "Food", "Gear"}
+Section:NewDropdown("Bring Item", "Teleport item to you", Items, function(choice)
+    local hrp = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+    if hrp then
+        for _, item in ipairs(Workspace:GetDescendants()) do
+            if item:IsA("BasePart") and item.Name == choice then
+                item.CFrame = hrp.CFrame + Vector3.new(math.random(-3, 3), 0, math.random(-3, 3))
+            end
+        end
+    end
+end)
+
+-- Instant Chest Open
+Section:NewButton("Open All Chests", "Simulate instant open", function()
+    for _, chest in ipairs(Workspace:GetDescendants()) do
+        if chest:IsA("Model") and chest.Name == "Chest" and chest:FindFirstChild("ClickDetector") then
+            fireclickdetector(chest.ClickDetector)
+        end
+    end
+end)
+
+-- Speed
+Section:NewSlider("Speed", "Adjust WalkSpeed", 200, 16, function(val)
+    local hum = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid")
     if hum then hum.WalkSpeed = val end
 end)
 
--- Refresh ESP Button
-Section:NewButton("Refresh ESP", "Reapply ESP highlights", function()
+-- ESP Refresh
+Section:NewButton("Refresh ESP", "Reapplies ESP highlights", function()
     removeESP()
     task.wait(0.1)
     if _G.espEnabled then
-        for _, obj in ipairs(workspace:GetDescendants()) do
+        for _, obj in ipairs(Workspace:GetDescendants()) do
             if obj:IsA("Model") and (obj.Name == "Chest" or obj.Name == "Wolf" or obj.Name == "LostChild") then
                 createESP(obj)
             end
@@ -122,22 +151,18 @@ Section:NewButton("Refresh ESP", "Reapply ESP highlights", function()
     end
 end)
 
--- ========= NEW FEATURES SECTION =========
+-- Extra Tab
 local Extra = Tab:NewSection("Extra Utilities")
 
 -- Infinite Jump
 _G.infJump = false
-Extra:NewToggle("Infinite Jump", "Jump repeatedly mid-air", function(state)
+Extra:NewToggle("Infinite Jump", "Jump repeatedly in air", function(state)
     _G.infJump = state
 end)
-
 game:GetService("UserInputService").JumpRequest:Connect(function()
     if _G.infJump then
-        local player = game.Players.LocalPlayer
-        local humanoid = player.Character and player.Character:FindFirstChildOfClass("Humanoid")
-        if humanoid then
-            humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
-        end
+        local hum = LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
+        if hum then hum:ChangeState(Enum.HumanoidStateType.Jumping) end
     end
 end)
 
@@ -147,10 +172,10 @@ Extra:NewToggle("No Clip", "Walk through walls", function(state)
     _G.noclip = state
     task.spawn(function()
         while _G.noclip and task.wait() do
-            local char = game.Players.LocalPlayer.Character
+            local char = LocalPlayer.Character
             if char then
                 for _, part in pairs(char:GetDescendants()) do
-                    if part:IsA("BasePart") and part.CanCollide then
+                    if part:IsA("BasePart") then
                         part.CanCollide = false
                     end
                 end
@@ -161,27 +186,24 @@ end)
 
 -- Auto Eat
 _G.autoEat = false
-Extra:NewToggle("Auto Eat Food", "Eats food when hungry", function(state)
+Extra:NewToggle("Auto Eat", "Eats when hungry", function(state)
     _G.autoEat = state
     task.spawn(function()
         while _G.autoEat and task.wait(2) do
-            -- Simulated example, change if game has actual hunger values
-            local backpack = game.Players.LocalPlayer.Backpack
-            for _, item in pairs(backpack:GetChildren()) do
-                if item.Name:lower():find("food") or item.Name == "Apple" or item.Name == "Meat" then
-                    item:Activate() -- try consume
+            for _, item in pairs(LocalPlayer.Backpack:GetChildren()) do
+                if item.Name:lower():find("food") or item.Name == "Apple" then
+                    item:Activate()
                 end
             end
         end
     end)
 end)
 
--- Fly Mode
+-- Fly
 _G.flying = false
-Extra:NewToggle("Fly Mode", "Toggle flying on/off", function(state)
+Extra:NewToggle("Fly", "Fly upward", function(state)
     _G.flying = state
-    local player = game.Players.LocalPlayer
-    local hrp = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
+    local hrp = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
     local bv = Instance.new("BodyVelocity", hrp)
     bv.Name = "FlyVel"
     bv.MaxForce = Vector3.new(1e5, 1e5, 1e5)
@@ -191,13 +213,14 @@ Extra:NewToggle("Fly Mode", "Toggle flying on/off", function(state)
     bv:Destroy()
 end)
 
--- Reset Button
-Extra:NewButton("Reset Character", "Respawn instantly", function()
-    local player = game.Players.LocalPlayer
-    if player.Character then
-        player.Character:BreakJoints()
+-- Reset
+Extra:NewButton("Reset", "Respawn character", function()
+    if LocalPlayer.Character then
+        LocalPlayer.Character:BreakJoints()
     end
 end)
 
--- Label
-Section:NewLabel("Features: Kill Aura, Gather, ESP, Fly, Jump, AutoEat, Teleport")
+-- Open/Close UI Keybind
+Tab:NewKeybind("Toggle UI", "Show/Hide GUI", Enum.KeyCode.RightControl, function()
+    Library:ToggleUI()
+end)
